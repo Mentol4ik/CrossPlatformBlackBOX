@@ -1,169 +1,98 @@
-import pygame
 import random
 
-# Инициализация Pygame
-pygame.init()
 
-# Размеры окна
-WINDOW_SIZE = 500
-GRID_SIZE = 9
-CELL_SIZE = WINDOW_SIZE // (GRID_SIZE + 2)  # 2 дополнительных клетки для рамок
-
-# Цвета
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-GRAY = (200, 200, 200)
-BLUE = (0, 0, 255)
-
-# Инициализация окна
-screen = pygame.display.set_mode((WINDOW_SIZE, WINDOW_SIZE))
-pygame.display.set_caption("Blackbox Game")
-
-# Шрифт для текста
-font = pygame.font.Font(None, 36)
+# Функция для создания случайной координаты
+def random_coordinate():
+    return random.randint(1, 8)
 
 
-# Создание игрового поля
-def create_board():
-    board = [[0 for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
-    return board
+# Функция для получения направления луча в зависимости от выбранной грани
+def get_ray_direction(ray):
+    if 1 <= ray <= 8:
+        return (0, 1), ray, 0  # Левая сторона (X=0)
+    elif 9 <= ray <= 16:
+        return (1, 0), 9, ray - 8  # Нижняя сторона (Y=9)
+    elif 17 <= ray <= 24:
+        return (0, -1), 9 - (ray - 16), 9  # Правая сторона (X=9)
+    elif 25 <= ray <= 32:
+        return (-1, 0), 0, 33 - ray  # Верхняя сторона (Y=0)
 
 
-# Размещение атомов
-def place_atoms(board, num_atoms):
-    placed_atoms = 0
-    while placed_atoms < num_atoms:
-        x = random.randint(0, GRID_SIZE - 1)
-        y = random.randint(0, GRID_SIZE - 1)
-        if board[x][y] == 0:
-            board[x][y] = 1
-            placed_atoms += 2
-    return board
+# Основной цикл игры
+def play_blackbox():
+    print("Welcome to BLACKBOX!")
+    print("Place your atoms and fire rays to find their positions.")
+
+    # Генерация сетки и размещение атомов
+    grid_size = 9
+    atoms_count = int(input("Enter the number of atoms: "))
+    grid = [[0 for _ in range(grid_size)] for _ in range(grid_size)]
+
+    # Размещение атомов
+    for _ in range(atoms_count):
+        while True:
+            x, y = random_coordinate(), random_coordinate()
+            if grid[x][y] == 0:
+                grid[x][y] = 1
+                break
+
+    score = 0
+    found_atoms = 0
+
+    # Основной игровой цикл
+    while True:
+        # Получаем от пользователя луч для запуска
+        try:
+            ray = int(input("Enter the ray number (1-32) or 0 to guess atoms: "))
+        except ValueError:
+            continue
+
+        if ray == 0:
+            break  # Переходим к угадыванию атомов
+
+        # Получаем направление луча и его начальные координаты
+        direction, x, y = get_ray_direction(ray)
+        dx, dy = direction
+
+        # Прогоняем луч по сетке
+        while 0 <= x < grid_size and 0 <= y < grid_size:
+            if grid[x][y] == 1:
+                print("ABSORBED!")
+                score += 1
+                break
+            # Проверяем соседние клетки для отражения
+            if (0 <= x + dx < grid_size and 0 <= y + dy < grid_size and
+                    (grid[x + dx][y] == 1 or grid[x][y + dy] == 1)):
+                dx, dy = -dx, -dy  # Меняем направление луча
+                print("REFLECTED!")
+            else:
+                x += dx
+                y += dy
+
+        if not (0 <= x < grid_size and 0 <= y < grid_size):
+            print("ESCAPED!")
+
+    # Угадывание местоположения атомов
+    print("Now tell me, where do you think the atoms are? (in row, column format)")
+    for i in range(1, atoms_count + 1):
+        guess_x = int(input(f"Guess the row for atom #{i}: "))
+        guess_y = int(input(f"Guess the column for atom #{i}: "))
+
+        if grid[guess_x][guess_y] == 1:
+            print("Correct!")
+            found_atoms += 1
+        else:
+            print("Incorrect!")
+            score += 5  # За неправильное предположение добавляем штраф
+
+    # Вывод итогов
+    print(f"You found {found_atoms} out of {atoms_count} atoms.")
+    print(f"Your final score is {score} points.")
+    play_again = input("Care to try again? (Y/N): ").upper()
+
+    if play_again == 'Y':
+        play_blackbox()
 
 
-# Рисование сетки
-def draw_grid():
-    for i in range(1, GRID_SIZE + 1):
-        pygame.draw.line(screen, BLACK, (i * CELL_SIZE, CELL_SIZE), (i * CELL_SIZE, WINDOW_SIZE - CELL_SIZE), 2)
-        pygame.draw.line(screen, BLACK, (CELL_SIZE, i * CELL_SIZE), (WINDOW_SIZE - CELL_SIZE, i * CELL_SIZE), 2)
-
-
-# Рисование атомов (для отладки)
-def draw_atoms(board):
-    for i in range(GRID_SIZE):
-        for j in range(GRID_SIZE):
-            if board[i][j] == 1:
-                pygame.draw.circle(screen, RED,
-                                   ((i + 1) * CELL_SIZE + CELL_SIZE // 2, (j + 1) * CELL_SIZE + CELL_SIZE // 2),
-                                   CELL_SIZE // 3)
-
-
-# Рисование интерфейса
-def draw_interface(result_message, guessed_atoms_message):
-    screen.fill(WHITE)
-    draw_grid()
-
-    # Отображение результата на экране
-    text = font.render(result_message, True, BLUE)
-    screen.blit(text, (WINDOW_SIZE // 2 - text.get_width() // 2, 10))
-
-    # Отображение сообщения с угаданными атомами
-    guess_text = font.render(guessed_atoms_message, True, RED)
-    screen.blit(guess_text, (WINDOW_SIZE // 2 - guess_text.get_width() // 2, 50))
-
-
-# Проверка, куда попал луч
-def shoot_ray(board, ray_position, direction):
-    x, y = ray_position
-
-    # Если попали в атом
-    if board[x][y] == 1:
-        return "ABSORBED"
-
-    # Для упрощения логики: если это левая сторона, луч всегда "ESCAPED" (просто для демонстрации)
-    if direction == "LEFT" or direction == "RIGHT":
-        return "ESCAPED"
-    elif direction == "TOP" or direction == "BOTTOM":
-        return "ESCAPED"
-
-    # Добавьте логику для реальной симуляции отражения и поглощения
-
-
-# Определение направления луча
-def get_ray_direction(mouse_pos):
-    x, y = mouse_pos
-    if x < CELL_SIZE:  # Левая сторона
-        return (0, y // CELL_SIZE - 1), "LEFT"
-    elif x > WINDOW_SIZE - CELL_SIZE:  # Правая сторона
-        return (GRID_SIZE - 1, y // CELL_SIZE - 1), "RIGHT"
-    elif y < CELL_SIZE:  # Верхняя сторона
-        return (x // CELL_SIZE - 1, 0), "TOP"
-    elif y > WINDOW_SIZE - CELL_SIZE:  # Нижняя сторона
-        return (x // CELL_SIZE - 1, GRID_SIZE - 1), "BOTTOM"
-    else:
-        return None, None
-
-
-# Проверка догадки игрока о местоположении атомов
-def check_guess(board, guess):
-    x, y = guess
-    if board[x][y] == 1:
-        return True
-    else:
-        return False
-
-
-# Главный цикл игры
-def main():
-    board = create_board()
-    board = place_atoms(board, 5)
-
-    running = True
-    result_message = ""
-    guessed_atoms_message = ""
-    guessed_atoms = []  # Хранение догадок игрока
-
-    while running:
-        # Перерисовываем интерфейс после каждого цикла
-        draw_interface(result_message, guessed_atoms_message)
-
-        # Рисуем атомы (для проверки)
-        # draw_atoms(board)  # Отключите это для реальной игры
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                mouse_pos = event.pos
-                ray_position, direction = get_ray_direction(mouse_pos)
-
-                if ray_position and direction:
-                    # Стреляем лучом в указанное направление
-                    result_message = shoot_ray(board, ray_position, direction)
-
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:  # Ввод координат атома (нажатием Enter)
-                    # Например, игрок вводит предполагаемую координату (3, 4)
-                    guess_x = int(input("Введите координату X атома (0-8): "))
-                    guess_y = int(input("Введите координату Y атома (0-8): "))
-
-                    guess = (guess_x, guess_y)
-
-                    if guess not in guessed_atoms:  # Чтобы не угадывать ту же клетку повторно
-                        guessed_atoms.append(guess)
-                        if check_guess(board, guess):
-                            guessed_atoms_message = f"ATOM FOUND at ({guess_x}, {guess_y})!"
-                        else:
-                            guessed_atoms_message = f"No atom at ({guess_x}, {guess_y})"
-
-        # Обновляем экран
-        pygame.display.flip()
-
-    pygame.quit()
-
-
-if __name__ == "__main__":
-    main()
+# Запускаем игру
+play_blackbox()
