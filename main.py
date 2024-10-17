@@ -39,7 +39,7 @@ def place_atoms(board, num_atoms):
         y = random.randint(0, GRID_SIZE - 1)
         if board[x][y] == 0:
             board[x][y] = 1
-            placed_atoms += 1
+            placed_atoms += 2
     return board
 
 
