@@ -16,7 +16,7 @@ windows:
 	pip install -r requirements.txt
 	$(PYINSTALLER) $(WINDOWS_OPTIONS) $(WINDOWS_SOURCE) --distpath $(WINDOWS_OUTPUT)
 	@echo "Запуск Windows-исполняемого файла..."
-	$(WINDOWS_OUTPUT)\$(FILE_NAME).exe
+	$(WINDOWS_OUTPUT)\main.exe
 
 linux:
 	@echo "Сборка для Linux..."
