@@ -61,8 +61,11 @@ def play_blackbox():
                 score += 1
                 break
             # Проверяем соседние клетки для отражения
-            if (0 <= x + dx < grid_size and 0 <= y + dy < grid_size and
-                    (grid[x + dx][y] == 1 or grid[x][y + dy] == 1)):
+            if (
+                0 <= x + dx < grid_size
+                and 0 <= y + dy < grid_size
+                and (grid[x + dx][y] == 1 or grid[x][y + dy] == 1)
+            ):
                 dx, dy = -dx, -dy  # Меняем направление луча
                 print("REFLECTED!")
             else:
@@ -90,9 +93,10 @@ def play_blackbox():
     print(f"Your final score is {score} points.")
     play_again = input("Care to try again? (Y/N): ").upper()
 
-    if play_again == 'Y':
+    if play_again == "Y":
         play_blackbox()
 
 
 # Запускаем игру
-play_blackbox()
+if __name__ == "__main__":
+    play_blackbox()
