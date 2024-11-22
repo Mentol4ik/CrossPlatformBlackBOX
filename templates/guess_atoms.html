@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guess Atoms</title>
+</head>
+<body>
+    <h1>Guess the Atoms' Locations</h1>
+    <form method="POST">
+        {% for i in range(1, atoms_count + 1) %}
+            <label for="guess_x_{{ i }}">Row for Atom #{{ i }}:</label>
+            <input type="number" id="guess_x_{{ i }}" name="guess_x_{{ i }}" required>
+            <label for="guess_y_{{ i }}">Column for Atom #{{ i }}:</label>
+            <input type="number" id="guess_y_{{ i }}" name="guess_y_{{ i }}" required>
+            <br><br>
+        {% endfor %}
+        <button type="submit">Submit Guesses</button>
+    </form>
+</body>
+</html>
