@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jumping Balls</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        .board {
+            margin: 20px auto;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Jumping Balls</h1>
+    <div class="board" id="board">{{ board }}</div>
+    <p>Moves: <span id="moves">{{ moves }}</span></p>
+    <input type="number" id="from" placeholder="From (1-9)" min="1" max="9">
+    <input type="number" id="to" placeholder="To (1-9)" min="1" max="9">
+    <button onclick="makeMove()">Move</button>
+    <button onclick="resetGame()">Reset</button>
+    <p id="message"></p>
+    <script>
+        async function makeMove() {
+            const from = document.getElementById("from").value;
+            const to = document.getElementById("to").value;
+            const response = await fetch("/move", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ from, to })
+            });
+            const data = await response.json();
+            if (data.status === "ok") {
+                document.getElementById("board").textContent = data.board;
+                document.getElementById("moves").textContent = data.moves;
+                document.getElementById("message").textContent = "";
+            } else if (data.status === "win") {
+                document.getElementById("board").textContent = data.board;
+                document.getElementById("message").textContent = `You win! Completed in ${data.moves} moves.`;
+            } else {
+                document.getElementById("message").textContent = data.message;
+            }
+        }
+
+        async function resetGame() {
+            const response = await fetch("/reset", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" }
+            });
+            const data = await response.json();
+            if (data.status === "ok") {
+                document.getElementById("board").textContent = data.board;
+                document.getElementById("moves").textContent = data.moves;
+                document.getElementById("message").textContent = "";
+            }
+        }
+    </script>
+</body>
+</html>
